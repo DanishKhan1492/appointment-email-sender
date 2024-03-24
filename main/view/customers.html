@@ -1,0 +1,37 @@
+<h1 class="text-center mb-4">Results</h1>
+<div class="table-responsive">
+    <table class="table table-bordered table-striped">
+        <thead class="thead-dark">
+        <tr>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Cell Number</th>
+            <th>Is SMS Sent</th>
+            <th>Is Email Sent</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{ range .customers }}
+        <tr>
+            <td>{{ .FullName }}</td>
+            <td>{{ .Email }}</td>
+            <td>{{ .CellNumber }}</td>
+            <td>
+                {{ if .IsSMSSent }}
+                <span class="badge bg-success">Yes</span>
+                {{ else }}
+                <span class="badge bg-danger">No</span>
+                {{ end }}
+            </td>
+            <td>
+                {{ if .IsEmailSent }}
+                <span class="badge bg-success">Yes</span>
+                {{ else }}
+                <span class="badge bg-danger">No</span>
+                {{ end }}
+            </td>
+        </tr>
+        {{ end }}
+        </tbody>
+    </table>
+</div>
