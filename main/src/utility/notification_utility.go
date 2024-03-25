@@ -4,6 +4,7 @@ import (
 	"appointment-notification-sender/main/src/config"
 	"appointment-notification-sender/main/src/models"
 	"context"
+	"embed"
 	"fmt"
 	brevo "github.com/getbrevo/brevo-go/lib"
 	"gopkg.in/gomail.v2"
@@ -12,28 +13,50 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 )
 
-func SendMessages(customers *[]models.Customer) {
+type NotificationHandler struct {
+	TemplateFs embed.FS
+}
+
+func SendMessages(customers *[]models.Customer, views embed.FS) {
+	errCh := make(chan error)
+	var wg sync.WaitGroup
+
 	for i := range *customers {
-		if (*customers)[i].IsSMS {
-			//err := sendSMS((*customers)[i].CellNumber, "Your appointment has been confirmed.")
-			//if err != nil {
-			//	(*customers)[i].IsSMSSent = false
-			//} else {
-			//	(*customers)[i].IsSMSSent = true
-			//}
-			log.Println("Send SMS is disabled")
-			(*customers)[i].IsSMSSent = false
-		}
-		if (*customers)[i].IsEmail {
-			sendEmail((*customers)[i].Email, (*customers)[i].FullName)
-			(*customers)[i].IsEmailSent = true
-		}
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			if (*customers)[i].IsSMS && config.GetAppConfig().EmailConfig.SmsEnabled {
+				err := sendSMS((*customers)[i].CellNumber, "Your appointment has been confirmed.")
+				if err != nil {
+					(*customers)[i].IsSMSSent = false
+					errCh <- err
+					return
+				} else {
+					(*customers)[i].IsSMSSent = true
+				}
+			}
+			if (*customers)[i].IsEmail {
+				sendEmail((*customers)[i].Email, (*customers)[i].FullName, views)
+				(*customers)[i].IsEmailSent = true
+			}
+		}(i)
+	}
+
+	go func() {
+		wg.Wait()
+		close(errCh)
+	}()
+
+	if err := <-errCh; err != nil {
+		log.Println("Error occurred:", err)
+		return
 	}
 }
 
-func sendEmail(email, fullName string) {
+func sendEmail(email, fullName string, views embed.FS) {
 	log.Println("Sending Email to : " + email)
 	log.Println("From Email: " + config.GetAppConfig().EmailConfig.FromEmailAddress)
 	from := config.GetAppConfig().EmailConfig.FromEmailAddress
@@ -45,7 +68,7 @@ func sendEmail(email, fullName string) {
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", "Appointment Confirmation")
 
-	tpl, err := template.ParseFiles("view/email_template.html")
+	tpl, err := template.ParseFS(views, "view/email_template.html")
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -61,7 +84,6 @@ func sendEmail(email, fullName string) {
 		log.Println("Error executing template:", err)
 		return
 	}
-	log.Print(emailBody.String())
 	m.SetBody("text/html", emailBody.String())
 	d := gomail.NewDialer(config.GetAppConfig().EmailConfig.SmtpRelayAddress, config.GetAppConfig().EmailConfig.SmtpPort, from, password)
 

@@ -1,5 +1,6 @@
 let dropArea = document.getElementById("drop-area");
 let fileInput = document.getElementById("file");
+let loaderOverlay = document.getElementById("loader-overlay");
 
 dropArea.addEventListener("click", () => {
     fileInput.click();
@@ -24,6 +25,7 @@ function handleDrop(e) {
 function handleFiles(files) {
     if (files.length > 0) {
         console.log("Uploading", files[0].name);
+        showLoader();
         // Create FormData object
         let formData = new FormData();
         formData.append("file", files[0]);
@@ -42,9 +44,21 @@ function handleFiles(files) {
             .then(htmlContent => {
                 // Update document body with received HTML content
                 document.getElementById("customer-container").innerHTML = htmlContent;
+                hideLoader();
             })
             .catch(error => {
                 console.error("Error:", error);
+                hideLoader();
             });
     }
+}
+
+function showLoader() {
+    loaderOverlay.classList.add("disable-pointer-events");
+    loaderOverlay.style.display = "block";
+}
+
+function hideLoader() {
+    loaderOverlay.classList.remove("disable-pointer-events");
+    loaderOverlay.style.display = "none";
 }

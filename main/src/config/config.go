@@ -14,8 +14,8 @@ type Config struct {
 		SmtpPort          int    `env:"SMTP_PORT,default=587"`
 		FromEmailAddress  string `env:"FROM_EMAIL_ADDRESS,default=muhammad.danish1492@gmail.com"`
 		FromEmailPassword string `env:"FROM_EMAIL_PASSWORD,default=KJVqdw8TS5zfZIOt"`
-		//SmsApiKey         string `env:"SMS_API_KEY,default=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"`
-		SmsApiKey string `env:"SMS_API_KEY,default=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"`
+		SmsApiKey         string `env:"SMS_API_KEY,default=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"`
+		SmsEnabled        bool   `env:"SMS_ENABLED,default=false"`
 	}
 }
 

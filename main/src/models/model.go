@@ -10,6 +10,6 @@ type Customer struct {
 	CellNumber  string
 	IsSMS       bool
 	IsEmail     bool
-	IsSMSSent   bool
-	IsEmailSent bool
+	IsSMSSent   bool `default:"false"`
+	IsEmailSent bool `default:"false"`
 }

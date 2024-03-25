@@ -3,6 +3,7 @@ package controllers
 import (
 	"appointment-notification-sender/main/src/models"
 	"appointment-notification-sender/main/src/utility"
+	"embed"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
@@ -14,7 +15,11 @@ import (
 var indexPage = "index.html"
 var customerPage = "customers.html"
 
-func UploadFile(c *gin.Context) {
+type UploadHandler struct {
+	TemplateFs embed.FS
+}
+
+func (uh UploadHandler) UploadFile(c *gin.Context) {
 	log.Print("Request Received")
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
@@ -57,7 +62,7 @@ func UploadFile(c *gin.Context) {
 	}
 
 	// Send messages to customers
-	utility.SendMessages(&customers)
+	utility.SendMessages(&customers, uh.TemplateFs)
 
 	// Render results to HTML
 	c.HTML(http.StatusOK, customerPage, gin.H{"customers": customers})
